@@ -1,5 +1,3 @@
-📄 Complete README.md
-markdown
 # 🚀 Cryptocurrency Price Prediction Challenge
 
 ### Predict Bitcoin's price and compete on the global leaderboard!
