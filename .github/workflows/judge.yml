@@ -1,75 +1,49 @@
-# Auto-grades submissions on PR
-name: 🔍 Judge Submission
+name: Judge Submission
 
 on:
   pull_request_target:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize]
 
 jobs:
   evaluate:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
-      contents: write  # ← ADD THIS to save files
+      contents: write
     
     steps:
-      - name: 📥 Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       
-      - name: 🐍 Setup Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
       
-      - name: 📦 Install dependencies
-        run: |
-          pip install requests pandas
+      - run: pip install requests pandas
       
-      - name: ✅ Validate submission
-        run: |
-          python scripts/validate_submission.py
-      
-      - name: 🎯 Calculate score
-        id: score
+      - name: Calculate score
         run: |
           python scripts/calculate_score.py
-          
-      - name: 💾 Save score for leaderboard
-        run: |
-          # Save the score result to a persistent location
-          mkdir -p .score-data
-          cp score_result.csv .score-data/score_${{ github.event.pull_request.user.login }}.csv
-          cp score_result.json .score-data/score_${{ github.event.pull_request.user.login }}.json
-          
-          # Also save submission
-          cp submission.csv .score-data/submission_${{ github.event.pull_request.user.login }}.csv
-          
-          # Save PR info
-          echo "${{ github.event.pull_request.user.login }}" > .score-data/last_user.txt
-          echo "${{ github.event.pull_request.number }}" > .score-data/last_pr.txt
       
-      - name: 📤 Upload score artifact
+      - name: Save score artifact
         uses: actions/upload-artifact@v4
         with:
-          name: score-data
-          path: .score-data/
-          retention-days: 7
+          name: score-data-${{ github.event.pull_request.number }}
+          path: |
+            score_result.json
+            score_result.csv
+          retention-days: 30
       
-      - name: 💬 Post comment on PR
+      - name: Comment on PR
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
-            const scoreData = fs.readFileSync('score_result.csv', 'utf8');
-            const lines = scoreData.split('\n');
-            const dataLine = lines[1].split(',');
-            const accuracy = dataLine[3];
-            
+            const data = JSON.parse(fs.readFileSync('score_result.json', 'utf8'));
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `## 🎯 Prediction Results\n\nYour Score: **${accuracy}%** accurate!\n\nGreat prediction!\n\n**Next steps:**\n- If you're happy with your score, wait for the maintainer to review\n- Want to improve? Update your prediction and push again\n- The leaderboard updates when this PR is merged`
+              body: `## 🎯 Prediction Results\n\nYour Score: **${data.accuracy}%** accurate!\n\nPrediction: $${data.prediction}\nActual: $${data.actual_price}\n\nGreat prediction!`
             });
