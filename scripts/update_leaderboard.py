@@ -1,7 +1,7 @@
 """
 Updates the master leaderboard with all submissions
 """
-
+import sys
 import csv
 import os
 import glob
