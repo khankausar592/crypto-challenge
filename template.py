@@ -1,2 +1,1 @@
-def predict_price():
-    return 92000.00
+def predict_price(): return 95000.00
