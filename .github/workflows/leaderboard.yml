@@ -1,1 +1,52 @@
+# Updates leaderboard on merge
+name: 📊 Update Leaderboard
 
+on:
+  pull_request_target:
+    types: [closed]
+  
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  update:
+    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+      
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      
+      - name: 📊 Update leaderboard
+        run: |
+          python scripts/update_leaderboard.py
+      
+      - name: 📁 Save submission history
+        run: |
+          # Store successful submission
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          USERNAME=${{ github.event.pull_request.user.login }}
+          if [ -f "submission.csv" ]; then
+            cp submission.csv "submissions/${USERNAME}_PR${PR_NUMBER}.csv"
+          fi
+      
+      - name: 📤 Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "📊 Update leaderboard for PR #${{ github.event.pull_request.number }}"
+          file_pattern: "leaderboard.csv submissions/*.csv"
+          commit_user_name: "Leaderboard Bot"
+          commit_user_email: "bot@example.com"
+          commit_author: "Leaderboard Bot <bot@example.com>"
+      
+      - name: 🏆 Display leaderboard
+        run: |
+          echo "🏆 CURRENT LEADERBOARD 🏆"
+          echo ""
+          cat leaderboard.csv
