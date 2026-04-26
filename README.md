@@ -1,9 +1,13 @@
-# Bitcoin Prediction Challenge
-Fork this repo, edit predict.py, and submit your prediction!
+# 🚀 Cryptocurrency Price Prediction Challenge
 
-## How to participate:
-1. Fork this repo
-2. Edit `predict.py` to return your Bitcoin price prediction
-3. Run `python submit.py` to generate submission.csv
-4. Open a Pull Request
-5. Get your score automatically!
+Predict Bitcoin's price and compete on the leaderboard!
+
+## 🎯 How to Participate
+
+### 1. Fork this repository
+Click the **Fork** button at the top right.
+
+### 2. Clone your fork
+```bash
+git clone https://github.com/YOUR_USERNAME/crypto-price-prediction.git
+cd crypto-price-prediction
