@@ -1,1 +1,92 @@
+# Auto-grades submissions on PR
+name: 🔍 Judge Submission
 
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+    
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      
+      - name: 📦 Install dependencies
+        run: |
+          pip install requests pandas
+      
+      - name: ✅ Validate submission.csv
+        id: validate
+        run: |
+          python scripts/validate_submission.py
+        continue-on-error: false
+      
+      - name: 🎯 Calculate score
+        id: score
+        run: |
+          python scripts/calculate_score.py
+      
+      - name: 📊 Extract score
+        id: extract
+        run: |
+          ACCURACY=$(python -c "import csv; f=open('score_result.csv'); print(list(csv.DictReader(f))[0]['accuracy'])")
+          echo "accuracy=$ACCURACY" >> $GITHUB_OUTPUT
+      
+      - name: 💬 Post comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const accuracy = ${{ steps.extract.outputs.accuracy }};
+            let emoji = '';
+            let message = '';
+            
+            if (accuracy >= 95) {
+              emoji = '🏆';
+              message = 'Outstanding! You\'re in the top tier!';
+            } else if (accuracy >= 80) {
+              emoji = '🎯';
+              message = 'Great prediction!';
+            } else if (accuracy >= 60) {
+              emoji = '📈';
+              message = 'Good attempt! Keep improving!';
+            } else {
+              emoji = '📚';
+              message = 'Keep learning! Check the historical data.';
+            }
+            
+            const commentBody = `## ${emoji} Prediction Results ${emoji}
+            
+            ### Your Score: **${accuracy}% accurate**
+            
+            ${message}
+            
+            **Next steps:**
+            - If you're happy with your score, wait for the maintainer to review
+            - Want to improve? Update your prediction and push again
+            - The leaderboard updates when this PR is merged
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: commentBody
+            });
+      
+      - name: ✅ Mark as success
+        if: success()
+        run: |
+          echo "✅ Evaluation complete!"
