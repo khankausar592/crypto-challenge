@@ -1,18 +1,20 @@
+main
 """
 Updates the master leaderboard with all submissions
 """
 import sys
+#!/usr/bin/env python3
+main
 import csv
 import os
 import glob
+import json
 from datetime import datetime
 
 def update_leaderboard():
-    """Collect all scores and create sorted leaderboard"""
+    scores = []
     
-    # Store all submissions
-    all_submissions = []
-    
+main
     print("🔍 Looking for score data...")
     
     # Check for score_result.csv from the judge workflow
@@ -103,14 +105,51 @@ def update_leaderboard():
             accuracy = float(sub.get('accuracy', 0))
         except (ValueError, TypeError):
             accuracy = 0
+    # Look for downloaded score data
+    score_files = glob.glob('.score-data/score_*.csv')
+    score_files.extend(glob.glob('score_result.csv'))
+    
+    for score_file in score_files:
+        if os.path.exists(score_file):
+            with open(score_file, 'r') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    scores.append(row)
+                    print(f"Found: {row.get('username')} - {row.get('accuracy')}%")
+    
+    # Also check JSON
+    json_files = glob.glob('.score-data/score_*.json')
+    json_files.extend(glob.glob('score_result.json'))
+    
+    for json_file in json_files:
+        if os.path.exists(json_file):
+            with open(json_file, 'r') as f:
+                data = json.load(f)
+                scores.append(data)
+                print(f"Found JSON: {data.get('username')} - {data.get('accuracy')}%")
+    
+    if not scores:
+        print("No scores found, skipping...")
+        return
+    
+    # Group by username, keep best score
+    best_scores = {}
+    for score in scores:
+        username = score.get('username')
+        accuracy = float(score.get('accuracy', 0))
+        main
         
-        if username not in user_best or accuracy > user_best[username]['accuracy']:
-            user_best[username] = {
+        if username not in best_scores or accuracy > best_scores[username]['accuracy']:
+            best_scores[username] = {
                 'username': username,
+        main
                 'prediction': float(sub.get('prediction', 0)),
                 'actual_price': float(sub.get('actual_price', 0)),
+                'prediction': float(score.get('prediction', 0)),
+                'actual_price': float(score.get('actual_price', 0)),
+        main
                 'accuracy': accuracy,
-                'best_date': datetime.now().strftime('%Y-%m-%d')
+                'date': datetime.now().strftime('%Y-%m-%d')
             }
             print(f"📊 Added {username}: {accuracy}%")
     
@@ -118,10 +157,9 @@ def update_leaderboard():
         print("❌ No valid user data found!")
         return False
     
-    # Sort by accuracy (highest first)
-    sorted_users = sorted(user_best.values(), key=lambda x: x['accuracy'], reverse=True)
+    # Sort and write leaderboard
+    sorted_users = sorted(best_scores.values(), key=lambda x: x['accuracy'], reverse=True)
     
-    # Write leaderboard with ranks
     with open('leaderboard.csv', 'w', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(['Rank', 'Username', 'Prediction', 'Actual Price', 'Accuracy %', 'Date'])
@@ -133,6 +171,7 @@ def update_leaderboard():
                 f"${user['prediction']:,.2f}",
                 f"${user['actual_price']:,.2f}",
                 f"{user['accuracy']}%",
+         main
                 user['best_date']
             ])
     
@@ -149,6 +188,12 @@ def update_leaderboard():
         print(f.read())
     
     return True
+  ]
+                user['date']
+            ])
+    
+    print(f"\n✅ Updated leaderboard with {len(sorted_users)} participants")
+     main
 
 if __name__ == "__main__":
     try:
