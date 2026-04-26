@@ -1,51 +1,88 @@
-# Updates leaderboard on merge
-name: 📊 Update Leaderboard
+name: Update Leaderboard
 
 on:
   pull_request_target:
     types: [closed]
-  
-  workflow_dispatch:
+    
+  workflow_run:
+    workflows: ["Judge Submission"]
+    types: [completed]
 
 jobs:
   update:
-    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      actions: read  # ← ADD THIS to download artifacts
+      actions: read
     
     steps:
-      - name: 📥 Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       
-      - name: 📥 Download score from PR
+      - name: Download score artifact
         uses: actions/download-artifact@v4
         with:
-          name: score-data
-          path: .score-data/
-        continue-on-error: true
+          pattern: score-data-*
+          path: .scores/
+          merge-multiple: true
       
-      - name: 🐍 Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-      
-      - name: 📊 Update leaderboard
+      - name: Update leaderboard
         run: |
-          python scripts/update_leaderboard.py
+          import json
+          import csv
+          import glob
+          import os
+          
+          # Find all score files
+          scores = []
+          for score_file in glob.glob('.scores/score_result.json'):
+              with open(score_file, 'r') as f:
+                data = json.load(f)
+                scores.append(data)
+          
+          if not scores:
+              print("No scores found")
+              exit(0)
+          
+          # Read existing leaderboard
+          leaderboard = []
+          if os.path.exists('leaderboard.csv'):
+              with open('leaderboard.csv', 'r') as f:
+                  reader = csv.reader(f)
+                  leaderboard = list(reader)
+          
+          # Add new scores
+          for score in scores:
+              username = score['username']
+              existing = False
+              for row in leaderboard[1:]:
+                  if len(row) > 1 and row[1] == username:
+                      existing = True
+                      break
+              
+              if not existing:
+                  leaderboard.append([
+                      str(len(leaderboard)),
+                      username,
+                      f"${score['prediction']:,.2f}",
+                      f"${score['actual_price']:,.2f}",
+                      f"{score['accuracy']}%",
+                      score['date']
+                  ])
+          
+          # Update ranks
+          for i, row in enumerate(leaderboard[1:], 1):
+              row[0] = str(i)
+          
+          # Write back
+          with open('leaderboard.csv', 'w', newline='') as f:
+              writer = csv.writer(f)
+              writer.writerows(leaderboard)
+          
+          print(f"✅ Updated leaderboard with {len(scores)} new scores")
+        shell: python
       
-      - name: 📁 Save submission history
-        run: |
-          mkdir -p submissions
-          if [ -f ".score-data/submission_*.csv" ]; then
-            cp .score-data/submission_*.csv submissions/
-          fi
-      
-      - name: 📤 Commit and push
-        uses: stefanzweifel/git-auto-commit-action@v5
+      - uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "📊 Update leaderboard automatically"
-          file_pattern: "leaderboard.csv submissions/*.csv"
-          commit_user_name: "Leaderboard Bot"
-          commit_user_email: "bot@github.com"
+          commit_message: "Auto-update leaderboard from PR #${{ github.event.pull_request.number }}"
+          file_pattern: "leaderboard.csv"
