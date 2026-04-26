@@ -1,11 +1,3 @@
-
----
-
-## 🔧 Updated Evaluation Metrics Code
-
-Here's the **updated `scripts/calculate_score.py`** with all metrics:
-
-```python
 """
 Calculates comprehensive prediction metrics including:
 - Accuracy score
