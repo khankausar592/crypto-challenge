@@ -1,9 +1,3 @@
-# 🚀 Cryptocurrency Price Prediction Challenge
-
-Predict Bitcoin's price and compete on the leaderboard!
-
-## 🎯 How to Participate
-
 📄 Complete README.md
 markdown
 # 🚀 Cryptocurrency Price Prediction Challenge
