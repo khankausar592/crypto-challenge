@@ -1,24 +1,9 @@
-# Crypto Price Prediction Challenge
+# Bitcoin Prediction Challenge
+Fork this repo, edit predict.py, and submit your prediction!
 
-## 🎯 Objective
-Predict future cryptocurrency prices using historical data.
-
-## 📊 Dataset
-- train.csv → contains Close price and Target
-- test.csv → contains Close price only
-
-## 🧠 Task
-Predict the Target column for test data.
-
-## 📏 Evaluation Metric
-RMSE (Root Mean Squared Error)
-
-## 📤 Submission Format
-id,prediction
-6,33000
-7,33500
-8,34000
-
-## ▶️ How to Run
-cd starter_code  
-python baseline.py
+## How to participate:
+1. Fork this repo
+2. Edit `predict.py` to return your Bitcoin price prediction
+3. Run `python submit.py` to generate submission.csv
+4. Open a Pull Request
+5. Get your score automatically!
