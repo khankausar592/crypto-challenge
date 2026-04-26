@@ -5,7 +5,7 @@ on:
   pull_request_target:
     types: [closed]
   
-  workflow_dispatch:  # Allow manual trigger
+  workflow_dispatch:
 
 jobs:
   update:
@@ -13,10 +13,18 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      actions: read  # ← ADD THIS to download artifacts
     
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
+      
+      - name: 📥 Download score from PR
+        uses: actions/download-artifact@v4
+        with:
+          name: score-data
+          path: .score-data/
+        continue-on-error: true
       
       - name: 🐍 Setup Python
         uses: actions/setup-python@v5
@@ -29,24 +37,15 @@ jobs:
       
       - name: 📁 Save submission history
         run: |
-          # Store successful submission
-          PR_NUMBER=${{ github.event.pull_request.number }}
-          USERNAME=${{ github.event.pull_request.user.login }}
-          if [ -f "submission.csv" ]; then
-            cp submission.csv "submissions/${USERNAME}_PR${PR_NUMBER}.csv"
+          mkdir -p submissions
+          if [ -f ".score-data/submission_*.csv" ]; then
+            cp .score-data/submission_*.csv submissions/
           fi
       
-      - name: 📤 Commit and push changes
+      - name: 📤 Commit and push
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "📊 Update leaderboard for PR #${{ github.event.pull_request.number }}"
+          commit_message: "📊 Update leaderboard automatically"
           file_pattern: "leaderboard.csv submissions/*.csv"
           commit_user_name: "Leaderboard Bot"
-          commit_user_email: "bot@example.com"
-          commit_author: "Leaderboard Bot <bot@example.com>"
-      
-      - name: 🏆 Display leaderboard
-        run: |
-          echo "🏆 CURRENT LEADERBOARD 🏆"
-          echo ""
-          cat leaderboard.csv
+          commit_user_email: "bot@github.com"
