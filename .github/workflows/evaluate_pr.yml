@@ -1,1 +1,59 @@
+name: Evaluate Submission
 
+on:
+  pull_request:
+    paths:
+      - 'submissions/**'
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pandas scikit-learn
+
+      - name: Run evaluation
+        id: eval
+        run: |
+          python evaluate.py \
+            --submission submissions/${{ github.event.pull_request.user.login }}.csv \
+            --output result.json
+
+      - name: Post score as PR comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const result = require('./result.json');
+            const body = result.valid
+              ? `✅ **Score: ${result.score}** | Rank will update on merge.`
+              : `❌ Submission invalid: ${result.error}`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });
+
+      - name: Update leaderboard on merge
+        if: github.event.pull_request.merged == true
+        run: python update_leaderboard.py
+
+      - name: Commit leaderboard
+        if: github.event.pull_request.merged == true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add scores.json leaderboard.md README.md
+          git commit -m "Update leaderboard after merge of PR #${{ github.event.pull_request.number }}"
+          git push
