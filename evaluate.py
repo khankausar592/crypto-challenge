@@ -1,6 +1,3 @@
-# clear any previous result
-with open(args.output if hasattr(args, 'output') else 'result.json', 'w') as f:
-    json.dump({"valid": False, "error": "Not yet evaluated"}, f)
 import argparse, json, os
 import pandas as pd
 
@@ -36,3 +33,4 @@ except Exception as e:
 
 with open(args.output, "w") as f:
     json.dump(result, f)
+    
