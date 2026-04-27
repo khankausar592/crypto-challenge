@@ -25,6 +25,21 @@ jobs:
       - name: Install dependencies
         run: pip install pandas scikit-learn
 
+      - name: Download submission file
+        run: |
+          curl -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3.raw" \
+            "https://api.github.com/repos/${{ github.event.pull_request.head.repo.full_name }}/contents/submissions/${{ github.event.pull_request.user.login }}.csv?ref=${{ github.event.pull_request.head.sha }}" \
+            -o submissions/${{ github.event.pull_request.user.login }}.csv
+
+      - name: Run evaluation
+        id: eval
+        run: |
+          python evaluate.py \
+            --submission submissions/${{ github.event.pull_request.user.login }}.csv \
+            --username ${{ github.event.pull_request.user.login }} \
+            --output result.json
+      
       - name: Run evaluation
         id: eval
         run: |
