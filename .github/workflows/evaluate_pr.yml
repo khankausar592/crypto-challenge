@@ -40,13 +40,6 @@ jobs:
             --username ${{ github.event.pull_request.user.login }} \
             --output result.json
       
-      - name: Run evaluation
-        id: eval
-        run: |
-          python evaluate.py \
-            --submission submissions/${{ github.event.pull_request.user.login }}.csv \
-            --username ${{ github.event.pull_request.user.login }} \
-            --output result.json
 
       - name: Post score as PR comment
         uses: actions/github-script@v7
