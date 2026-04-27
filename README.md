@@ -26,7 +26,7 @@ This is a binary classification problem — your model outputs `1` (price goes u
 | `test_features.csv` | Test set without labels — predict on this and submit |
 | `sample_submission.csv` | Example of the correct submission format |
 
-**Features available:** `Date`, `Open`, `High`, `Low`, `Close`, `Volume_(BTC)`  
+**Features available:** `Date`, `Open`, `High`, `Low`, `Close`, `Volume`
 **Target:** Will the closing price be higher tomorrow? `1 = Yes`, `0 = No`
 
 ---
