@@ -35,6 +35,8 @@ Get ranked on the leaderboard!
 text
 
 ---
+<!-- LEADERBOARD_START -->
+<!-- LEADERBOARD_END -->
 
 ## 🚀 Quick Start
 
