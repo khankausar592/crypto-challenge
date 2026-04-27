@@ -8,7 +8,12 @@ parser.add_argument("--submission")
 parser.add_argument("--username")
 parser.add_argument("--output")
 args = parser.parse_args()
-
+import os
+path = args.submission
+print("File exists:", os.path.exists(path))
+print("File size:", os.path.getsize(path) if os.path.exists(path) else "N/A")
+with open(path, 'rb') as f:
+    print("Raw bytes:", f.read(100))
 try:
     sub = pd.read_csv(args.submission, encoding='utf-8-sig', sep=None, engine='python')
     gt  = pd.read_csv(GROUND_TRUTH)
