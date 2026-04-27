@@ -5,6 +5,7 @@ GROUND_TRUTH = "ground_truth.csv"   # kept private or in a secret path
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--submission")
+parser.add_argument("--username")
 parser.add_argument("--output")
 args = parser.parse_args()
 
