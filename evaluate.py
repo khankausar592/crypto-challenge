@@ -1,7 +1,6 @@
-import argparse, json
-import pandas as pd
+import argparse, json, pandas as pd
 
-GROUND_TRUTH = "ground_truth.csv"
+GROUND_TRUTH = "data/ground_truth.csv"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--submission")
@@ -11,26 +10,33 @@ args = parser.parse_args()
 
 try:
     sub = pd.read_csv(args.submission)
-    gt  = pd.read_csv(GROUND_TRUTH)
+    gt = pd.read_csv(GROUND_TRUTH)
 
-    print("Columns:", sub.columns.tolist())
-    print("Shape:", sub.shape)
-    print("Head:", sub.head())
+    # ✅ Validation
+    if list(sub.columns) != ["id", "prediction"]:
+        raise ValueError("CSV must have columns: id,prediction")
 
-    assert list(sub.columns) == ["id", "prediction"], "Columns must be: id, prediction"
-    assert len(sub) == len(gt), f"Expected {len(gt)} rows, got {len(sub)}"
-    assert set(sub["id"]) == set(gt["id"]), "Row IDs don't match"
+    if len(sub) != len(gt):
+        raise ValueError("Submission length does not match test set")
 
-    sub = sub.sort_values("id")
-    gt  = gt.sort_values("id")
+    if not sub["prediction"].isin([0,1]).all():
+        raise ValueError("Predictions must be 0 or 1 only")
 
-    correct = (sub["prediction"].values == gt["label"].values).sum()
-    accuracy = round(correct / len(gt), 4)
+    # ✅ Accuracy
+    accuracy = (sub["prediction"] == gt["Target"]).mean()
 
-    result = {"valid": True, "score": accuracy, "username": args.username}
+    result = {
+        "valid": True,
+        "score": float(accuracy),
+        "username": args.username
+    }
 
 except Exception as e:
-    result = {"valid": False, "error": str(e), "username": args.username}
+    result = {
+        "valid": False,
+        "error": str(e),
+        "username": args.username
+    }
 
 with open(args.output, "w") as f:
     json.dump(result, f)
