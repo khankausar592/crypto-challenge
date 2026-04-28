@@ -1,21 +1,20 @@
 name: Evaluate Submission
 
 on:
-  pull_request_target:
+  pull_request:
     paths:
       - 'submissions/**'
 
 jobs:
   evaluate:
     runs-on: ubuntu-latest
+
     permissions:
       pull-requests: write
       contents: write
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -23,49 +22,37 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install pandas scikit-learn
+        run: pip install pandas
 
-      - name: Use submission file directly
-        run: ls submissions/
+      - name: Find submission file
         run: |
-          echo "File contents:"
-          cat submissions/${{ github.event.pull_request.user.login }}.csv
-          echo "File size:"
-          wc -c submissions/${{ github.event.pull_request.user.login }}.csv
+          FILE=$(ls submissions/*.csv | head -n 1)
+          echo "FILE=$FILE" >> $GITHUB_ENV
+
       - name: Run evaluation
-        id: eval
         run: |
           python evaluate.py \
-            --submission submissions/${{ github.event.pull_request.user.login }}.csv \
+            --submission $FILE \
             --username ${{ github.event.pull_request.user.login }} \
             --output result.json
-      
 
-      - name: Post score as PR comment
+      - name: Post result comment
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
             const result = JSON.parse(fs.readFileSync('./result.json'));
-            const body = result.valid
-              ? `✅ **Accuracy: ${(result.score * 100).toFixed(2)}%**`
-              : `❌ Submission invalid: ${result.error}`;
+
+            let body = "";
+            if (result.valid) {
+              body = `✅ Accuracy: ${(result.score * 100).toFixed(2)}%`;
+            } else {
+              body = `❌ Submission invalid\n\nReason:\n${result.error}`;
+            }
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body
             });
-
-      - name: Update leaderboard on merge
-        if: github.event.pull_request.merged == true
-        run: python update_leaderboard.py
-
-      - name: Commit leaderboard
-        if: github.event.pull_request.merged == true
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add scores.json README.md
-          git commit -m "Update leaderboard after PR #${{ github.event.pull_request.number }}"
-          git push
