@@ -23,7 +23,7 @@ jobs:
       - name: Install dependencies
         run: pip install pandas
 
-      - name: Re-run evaluation
+      - name: Run evaluation again
         run: |
           python evaluate.py \
             --submission submissions/${{ github.event.pull_request.user.login }}.csv \
