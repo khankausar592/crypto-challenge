@@ -1,11 +1,8 @@
----
-
+<!-- LEADERBOARD_START -->
 ## 🏆 Leaderboard
 
-<!-- LEADERBOARD_START -->
+_No submissions yet_
 <!-- LEADERBOARD_END -->
-
----
 
 ## 💡 Tips
 - Try feature engineering — moving averages, RSI, price momentum
