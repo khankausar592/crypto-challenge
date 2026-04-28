@@ -1,7 +1,10 @@
 <!-- LEADERBOARD_START -->
 ## 🏆 Leaderboard
+_Last updated: 2026-04-28 19:03 UTC_
 
-_No submissions yet_
+| Rank | Participant | Accuracy |
+|------|-------------|----------|
+| 1 | [khankausar592](https://github.com/khankausar592) | 60.0% |
 <!-- LEADERBOARD_END -->
 
 ## 💡 Tips
