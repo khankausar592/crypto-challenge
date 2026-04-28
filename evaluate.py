@@ -24,7 +24,13 @@ try:
     print("GT shape:", gt.shape)
     print("Sub head:", sub.head())
 
-    accuracy = 0.5
+    if len(sub) != len(gt):
+    raise ValueError("Submission length mismatch")
+
+    if list(sub.columns) != ["id", "prediction"]:
+    raise ValueError("CSV must be: id,prediction")
+
+    accuracy = (sub["prediction"] == gt["Target"]).mean()
     result = {"valid": True, "score": accuracy, "username": args.username}
 
 except Exception as e:
